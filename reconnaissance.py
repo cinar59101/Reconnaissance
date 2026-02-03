@@ -1,5 +1,5 @@
 __tool__ = "Reconnaissance"
-__version__ = "1.1.1"
+__version__ = "1.1.0"
 __author__ = "cinar59101"
 
 # -*- coding: utf-8 -*-
@@ -49,7 +49,7 @@ def menu():
                 print(Fore.RED + "Username cannot be empty.")
 
         elif choice == "2":
-            check_for_update()
+            check_for_updates()
 
         elif choice == "0":
             print(Fore.GREEN + "Goodbye.")
@@ -74,28 +74,38 @@ def safe_request(url):
         return "error"
 
 # ===================== UPDATE SYSTEM =====================
-def check_for_update():
-    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+def check_for_updates():
+    print(Fore.BLUE + "\n[*] Checking for updates...\n")
+
+    repo_api = "https://api.github.com/repos/cinar59101/Reconnaissance/releases/latest"
 
     try:
-        r = requests.get(api_url, timeout=6)
+        r = requests.get(repo_api, timeout=8)
+        if r.status_code != 200:
+            print(Fore.RED + "[!] Could not check updates.")
+            return
+
         data = r.json()
+        latest_version = data["tag_name"].lstrip("v")
 
-        latest_version = data["tag_name"].replace("v", "")
+        def version_tuple(v):
+            return tuple(map(int, v.split(".")))
 
-        if latest_version != __version__:
-            print(Fore.YELLOW + f"\n[+] New version available: v{latest_version}")
-            choice = input(Fore.CYAN + "[?] Do you want to update? (y/n): ").lower()
+        if version_tuple(latest_version) > version_tuple(__version__):
+            print(Fore.GREEN + f"[+] New version available: v{latest_version}")
+            choice = input("[?] Do you want to update? (y/n): ").lower()
 
             if choice == "y":
-                download_and_update()
+                print(Fore.YELLOW + "[!] Auto-update not implemented yet.")
+                print(Fore.YELLOW + "    Please update manually from GitHub.")
             else:
-                print(Fore.YELLOW + "Update skipped.")
+                print(Fore.CYAN + "Update skipped.")
         else:
-            print(Fore.GREEN + "[+] You are using the latest version.")
+            print(Fore.GREEN + "[✓] You are using the latest version.")
 
-    except Exception:
-        print(Fore.RED + "[!] Failed to check for updates.")
+    except Exception as e:
+        print(Fore.RED + f"[ERROR] Update check failed: {e}")
+
 
 def download_and_update():
     raw_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/reconnaissance.py"
@@ -184,4 +194,3 @@ def username_osint(username):
 if __name__ == "__main__":
     banner()
     menu()
-
