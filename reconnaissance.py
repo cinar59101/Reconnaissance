@@ -1,5 +1,5 @@
 __tool__ = "Reconnaissance"
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __author__ = "cinar59101"
 
 # -*- coding: utf-8 -*-
@@ -184,3 +184,4 @@ def username_osint(username):
 if __name__ == "__main__":
     banner()
     menu()
+
