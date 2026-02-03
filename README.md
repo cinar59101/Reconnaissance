@@ -26,6 +26,10 @@ Python libraries used:
 ```
 requests
 colorama
+python-whois
+requests
+colorama
+
 ```
 
 Install dependencies:
@@ -117,3 +121,4 @@ Planned improvements:
 ## 📄 License
 
 This project is licensed under the **MIT License**.
+
