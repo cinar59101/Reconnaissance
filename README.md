@@ -66,6 +66,7 @@ You will see an interactive menu:
 
 ```
 [1] Username Reconnaissance
+[2] Check for updates
 [0] Exit
 ```
 
@@ -121,4 +122,5 @@ Planned improvements:
 ## 📄 License
 
 This project is licensed under the **MIT License**.
+
 
