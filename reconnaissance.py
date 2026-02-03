@@ -1,5 +1,5 @@
 __tool__ = "Reconnaissance"
-__version__ = "1.1"
+__version__ = "1.1.0"
 __author__ = "cinar59101"
 
 # -*- coding: utf-8 -*-
@@ -11,7 +11,7 @@ import time
 init(autoreset=True)
 
 HEADERS = {
-    "User-Agent": "Reconnaissance-OSINT/1.1"
+    "User-Agent": "Reconnaissance-OSINT/1.1.0"
 }
 
 # ===================== BANNER =====================
@@ -20,7 +20,7 @@ def banner():
 ====================================
         Reconnaissance
      OSINT CLI Framework
-        v1.1
+        v1.1.0
 ====================================
 """)
 
@@ -32,9 +32,9 @@ def menu():
 [0] Exit
 """)
         try:
-            choice = input(Fore.CYAN + "Seçim: ").strip()
+            choice = input(Fore.CYAN + "Select option: ").strip()
         except KeyboardInterrupt:
-            print(Fore.RED + "\nÇıkış yapıldı.")
+            print(Fore.RED + "\nExiting...")
             sys.exit(0)
 
         if choice == "1":
@@ -42,14 +42,14 @@ def menu():
             if username:
                 username_osint(username)
             else:
-                print(Fore.RED + "Username boş olamaz.")
+                print(Fore.RED + "Username cannot be empty.")
         elif choice == "0":
-            print(Fore.GREEN + "Çıkış yapılıyor...")
+            print(Fore.GREEN + "Goodbye.")
             break
         else:
-            print(Fore.RED + "Geçersiz seçim.")
+            print(Fore.RED + "Invalid selection.")
 
-# ===================== REQUEST HELPER =====================
+# ===================== SAFE REQUEST =====================
 def safe_request(url):
     try:
         r = requests.get(
@@ -66,7 +66,7 @@ def safe_request(url):
 
 # ===================== USERNAME OSINT =====================
 def username_osint(username):
-    print(Fore.CYAN + f"\n[+] Username Reconnaissance: {username}\n")
+    print(Fore.CYAN + f"\n[+] Starting username reconnaissance: {username}\n")
 
     sites = {
         "GitHub": {
@@ -79,7 +79,7 @@ def username_osint(username):
             "not_found": ["sorry, this page isn't available"],
             "proof": [f'\"username\":\"{username}\"']
         },
-        "Twitter/X": {
+        "Twitter / X": {
             "url": f"https://x.com/{username}",
             "not_found": ["this account doesn’t exist", "account suspended"],
             "proof": [f'\"screen_name\":\"{username}\"']
@@ -98,7 +98,7 @@ def username_osint(username):
 
     for site, data in sites.items():
         print(Fore.BLUE + f"[*] Checking {site}...")
-        time.sleep(0.5)  # rate limit / termux dostu
+        time.sleep(0.5)
 
         r = safe_request(data["url"])
 
@@ -111,15 +111,10 @@ def username_osint(username):
 
         page = r.text.lower()
 
-        # 🔴 Net NOT FOUND
         if r.status_code == 404 or any(x in page for x in data["not_found"]):
             print(Fore.RED + f"[NOT FOUND] {site}")
-
-        # 🟢 Proof ile doğrulanmış FOUND
         elif r.status_code == 200 and any(p.lower() in page for p in data["proof"]):
             print(Fore.GREEN + f"[FOUND] {site}: {data['url']}")
-
-        # 🟡 Belirsiz durum
         else:
             print(Fore.YELLOW + f"[UNKNOWN] {site}")
 
