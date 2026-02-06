@@ -104,10 +104,6 @@ Planned improvements:
 
 * Confidence score system
 * JSON / TXT report export
-* `--username` CLI argument support
-* Deep / fast scan modes
-* More platforms (50+)
-
 ---
 
 ## 👤 Author
@@ -120,6 +116,7 @@ Planned improvements:
 ## 📄 License
 
 This project is licensed under the **MIT License**.
+
 
 
 
