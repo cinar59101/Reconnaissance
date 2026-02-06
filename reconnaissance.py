@@ -1,5 +1,5 @@
 __tool__ = "Reconnaissance"
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 __author__ = "cinar59101"
 
 # -*- coding: utf-8 -*-
@@ -7,14 +7,12 @@ import requests
 from colorama import Fore, init
 import sys
 import time
-import os
 import argparse
 
 init(autoreset=True)
 
 # ===================== CONFIG =====================
 GITHUB_REPO = "cinar59101/Reconnaissance"
-RAW_FILE_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/reconnaissance.py"
 
 SCAN_MODE = "fast"
 REQUEST_TIMEOUT = 8
@@ -26,32 +24,32 @@ HEADERS = {
 # ===================== SITE GROUPS =====================
 SITE_GROUPS = {
     "social": {
-        "Instagram": ("https://www.instagram.com/{}/", "Sorry"),
+        "Instagram": ("https://www.instagram.com/{}/", "sorry"),
         "Twitter / X": ("https://x.com/{}", "doesn’t exist"),
-        "TikTok": ("https://www.tiktok.com/@{}", "Couldn't find"),
+        "TikTok": ("https://www.tiktok.com/@{}", "couldn't find"),
         "Reddit": ("https://www.reddit.com/user/{}", "nobody"),
         "Pinterest": ("https://www.pinterest.com/{}/", "404"),
-        "Tumblr": ("https://{}.tumblr.com", "Not Found"),
+        "Tumblr": ("https://{}.tumblr.com", "not found"),
     },
     "dev": {
-        "GitHub": ("https://github.com/{}", "Not Found"),
-        "GitLab": ("https://gitlab.com/{}", "Not Found"),
+        "GitHub": ("https://github.com/{}", "not found"),
+        "GitLab": ("https://gitlab.com/{}", "not found"),
         "Bitbucket": ("https://bitbucket.org/{}", "not found"),
-        "StackOverflow": ("https://stackoverflow.com/users/{}", "Page not found"),
+        "StackOverflow": ("https://stackoverflow.com/users/{}", "page not found"),
         "Kaggle": ("https://www.kaggle.com/{}", "404"),
     },
     "gaming": {
         "Steam": ("https://steamcommunity.com/id/{}", "could not be found"),
-        "Roblox": ("https://www.roblox.com/user.aspx?username={}", "Page cannot be found"),
-        "NameMC": ("https://namemc.com/profile/{}", "Not Found"),
+        "Roblox": ("https://www.roblox.com/user.aspx?username={}", "page cannot be found"),
+        "NameMC": ("https://namemc.com/profile/{}", "not found"),
     },
     "content": {
         "YouTube": ("https://www.youtube.com/@{}", "404"),
-        "Twitch": ("https://www.twitch.tv/{}", "Sorry"),
+        "Twitch": ("https://www.twitch.tv/{}", "sorry"),
         "SoundCloud": ("https://soundcloud.com/{}", "404"),
         "Medium": ("https://medium.com/@{}", "404"),
-        "DeviantArt": ("https://www.deviantart.com/{}", "DeviantArt"),
-        "Patreon": ("https://www.patreon.com/{}", "Not Found"),
+        "DeviantArt": ("https://www.deviantart.com/{}", "deviantart"),
+        "Patreon": ("https://www.patreon.com/{}", "not found"),
     }
 }
 
@@ -66,6 +64,13 @@ def parse_args():
     parser.add_argument("--only", choices=SITE_GROUPS.keys(), help="Scan only one group")
     parser.add_argument("--timeout", type=int, help="Request timeout (seconds)")
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
+
+    # NEW
+    parser.add_argument(
+        "--wizard",
+        action="store_true",
+        help="Launch interactive menu (wizard mode)"
+    )
 
     return parser.parse_args()
 
@@ -102,42 +107,30 @@ def safe_request(url):
 # ===================== SCAN MODE =====================
 def select_scan_mode():
     global SCAN_MODE
-    print(Fore.YELLOW + """
+
+    while True:
+        print("""
 Select scan mode:
 [1] Fast Scan
 [2] Strict Scan
 """)
-    choice = input(Fore.CYAN + "Mode: ").strip()
+        choice = input("Mode: ").strip()
 
-    if choice == "1":
-        SCAN_MODE = "fast"
-    elif choice == "2":
-        SCAN_MODE = "strict"
-    else:
-        print(Fore.RED + "Invalid mode.")
+        if choice == "1":
+            SCAN_MODE = "fast"
+            break
+        elif choice == "2":
+            SCAN_MODE = "strict"
+            break
+        else:
+            print("[!] Invalid mode, try again.")
+
+    print(f"[✓] Scan mode set to: {SCAN_MODE.upper()}")
 
 # ===================== UPDATE CHECK =====================
 def check_for_updates():
     print(Fore.BLUE + "\n[*] Checking for updates...\n")
-
-    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-
-    try:
-        r = requests.get(api_url, timeout=8)
-        if r.status_code != 200:
-            print(Fore.RED + "[!] GitHub unreachable.")
-            return
-
-        latest = r.json()["tag_name"].lstrip("v")
-
-        if tuple(map(int, latest.split("."))) > tuple(map(int, __version__.split("."))):
-            print(Fore.GREEN + f"[+] New version available: v{latest}")
-            print(Fore.YELLOW + "Use GitHub Actions auto-update.")
-        else:
-            print(Fore.GREEN + "[✓] You are using the latest version.")
-
-    except Exception as e:
-        print(Fore.RED + f"[ERROR] {e}")
+    print(Fore.YELLOW + "GitHub Actions auto-update is enabled.\n")
 
 # ===================== USERNAME OSINT =====================
 def username_osint(username, group=None):
@@ -155,7 +148,7 @@ def username_osint(username, group=None):
         url = url_template.format(username)
 
         print(Fore.BLUE + f"[*] Checking {site}...")
-        time.sleep(0.3)
+        time.sleep(0.25)
 
         r = safe_request(url)
 
@@ -168,6 +161,8 @@ def username_osint(username, group=None):
             print(Fore.MAGENTA + f"[ERROR] {site}")
             continue
 
+        page = r.text.lower()
+
         if SCAN_MODE == "fast":
             if r.status_code == 200:
                 print(Fore.GREEN + f"[FOUND] {site}: {url}")
@@ -176,7 +171,6 @@ def username_osint(username, group=None):
                 print(Fore.RED + f"[NOT FOUND] {site}")
                 not_found += 1
         else:
-            page = r.text.lower()
             if r.status_code == 200 and proof.lower() not in page:
                 print(Fore.GREEN + f"[FOUND] {site}: {url}")
                 found += 1
@@ -190,7 +184,7 @@ def username_osint(username, group=None):
     print(Fore.YELLOW + f"⏱ Timeout   : {timeout}")
     print(Fore.CYAN + "=============================\n")
 
-# ===================== MENU =====================
+# ===================== MENU (WIZARD) =====================
 def menu():
     while True:
         print(Fore.YELLOW + """
@@ -229,7 +223,19 @@ if __name__ == "__main__":
 
     banner()
 
-    if args.username:
-        username_osint(args.username, args.only)
-    else:
+    # WIZARD MODE
+    if args.wizard:
         menu()
+        sys.exit(0)
+
+    # PARAMETER ENFORCEMENT
+    if not args.username:
+        print(Fore.RED + "[!] Username is required unless --wizard is used.\n")
+        print("Examples:")
+        print("  python reconnaissance.py -u username")
+        print("  python reconnaissance.py -u username --only social")
+        print("  python reconnaissance.py --wizard\n")
+        sys.exit(1)
+
+    # CLI MODE
+    username_osint(args.username, args.only)
