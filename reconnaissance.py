@@ -1,5 +1,5 @@
 __tool__ = "Reconnaissance"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 __author__ = "cinar59101"
 
 # -*- coding: utf-8 -*-
@@ -88,74 +88,98 @@ def check_for_updates():
 
         if version_tuple(latest_version) > version_tuple(__version__):
             print(Fore.GREEN + f"[+] New version available: v{latest_version}")
-            choice = input(Fore.CYAN + "[?] Update now? (y/n): ").lower().strip()
-
-            if choice == "y":
-                download_and_update()
-            else:
-                print(Fore.YELLOW + "Update skipped.")
         else:
             print(Fore.GREEN + "[✓] You are using the latest version.")
 
     except Exception as e:
         print(Fore.RED + f"[ERROR] Update check failed: {e}")
 
-def download_and_update():
-    current_file = os.path.realpath(__file__)
-    backup_file = current_file + ".bak"
-
-    try:
-        print(Fore.BLUE + "[*] Downloading latest version...")
-
-        r = requests.get(RAW_FILE_URL, timeout=15)
-        if r.status_code != 200:
-            print(Fore.RED + "[!] Failed to download update.")
-            return
-
-        # Backup
-        if os.path.exists(backup_file):
-            os.remove(backup_file)
-        os.rename(current_file, backup_file)
-
-        with open(current_file, "w", encoding="utf-8") as f:
-            f.write(r.text)
-
-        print(Fore.GREEN + "[+] Update successful!")
-        print(Fore.YELLOW + "[!] Restart the tool to apply the update.")
-        sys.exit(0)
-
-    except Exception as e:
-        print(Fore.RED + f"[!] Update failed: {e}")
-        if os.path.exists(backup_file):
-            os.rename(backup_file, current_file)
-            print(Fore.YELLOW + "[!] Previous version restored.")
-
 # ===================== USERNAME OSINT =====================
 def username_osint(username):
     print(Fore.CYAN + f"\n[+] Starting username reconnaissance: {username}\n")
 
     sites = {
-        "GitHub": f"https://github.com/{username}",
-        "Instagram": f"https://www.instagram.com/{username}/",
-        "Twitter / X": f"https://x.com/{username}",
-        "TikTok": f"https://www.tiktok.com/@{username}",
-        "Reddit": f"https://www.reddit.com/user/{username}",
+        # DEV / CODE
+        "GitHub": "https://github.com/{}",
+        "GitLab": "https://gitlab.com/{}",
+        "Bitbucket": "https://bitbucket.org/{}",
+        "SourceForge": "https://sourceforge.net/u/{}/",
+
+        # SOCIAL
+        "Instagram": "https://www.instagram.com/{}/",
+        "Twitter / X": "https://x.com/{}",
+        "TikTok": "https://www.tiktok.com/@{}",
+        "Reddit": "https://www.reddit.com/user/{}",
+        "Pinterest": "https://www.pinterest.com/{}/",
+        "Tumblr": "https://{}.tumblr.com",
+        "Medium": "https://medium.com/@{}",
+        "Quora": "https://www.quora.com/profile/{}",
+
+        # GAMING
+        "Steam": "https://steamcommunity.com/id/{}",
+        "Roblox": "https://www.roblox.com/user.aspx?username={}",
+        "NameMC": "https://namemc.com/profile/{}",
+
+        # MEDIA
+        "YouTube": "https://www.youtube.com/@{}",
+        "Twitch": "https://www.twitch.tv/{}",
+        "SoundCloud": "https://soundcloud.com/{}",
+        "Vimeo": "https://vimeo.com/{}",
+
+        # TECH / SECURITY
+        "StackOverflow": "https://stackoverflow.com/users/{}",
+        "HackerOne": "https://hackerone.com/{}",
+        "TryHackMe": "https://tryhackme.com/p/{}",
+        "Keybase": "https://keybase.io/{}",
+
+        # ART / OTHER
+        "DeviantArt": "https://www.deviantart.com/{}",
+        "Patreon": "https://www.patreon.com/{}",
+        "Flickr": "https://www.flickr.com/people/{}/"
     }
 
-    for site, url in sites.items():
+    site_checks = {
+        "GitHub": ["not found"],
+        "GitLab": ["404"],
+        "Instagram": ["sorry, this page isn't available"],
+        "Twitter / X": ["this account doesn’t exist"],
+        "TikTok": ["couldn't find this account"],
+        "Reddit": ["nobody on reddit"],
+        "Steam": ["the specified profile could not be found"],
+        "NameMC": ["profile not found"],
+        "YouTube": ["404 not found"],
+        "Twitch": ["sorry. unless you’ve got a time machine"],
+        "Medium": ["404"],
+        "Keybase": ["not found"],
+        "TryHackMe": ["page not found"],
+    }
+
+    for site, url_template in sites.items():
+        url = url_template.format(username)
         print(Fore.BLUE + f"[*] Checking {site}...")
-        time.sleep(0.4)
+        time.sleep(0.35)
 
         r = safe_request(url)
 
         if r == "timeout":
             print(Fore.YELLOW + f"[TIMEOUT] {site}")
-        elif r == "error":
+            continue
+
+        if r == "error":
             print(Fore.MAGENTA + f"[ERROR] {site}")
-        elif r.status_code == 200:
-            print(Fore.GREEN + f"[FOUND] {site}: {url}")
-        else:
+            continue
+
+        if r.status_code != 200:
             print(Fore.RED + f"[NOT FOUND] {site}")
+            continue
+
+        content = r.text.lower()
+        false_hits = site_checks.get(site, [])
+
+        if any(bad in content for bad in false_hits):
+            print(Fore.RED + f"[NOT FOUND] {site}")
+        else:
+            print(Fore.GREEN + f"[FOUND] {site}: {url}")
 
 # ===================== MAIN =====================
 if __name__ == "__main__":
